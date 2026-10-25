@@ -22,6 +22,23 @@
     </div>
   </section>
 
+  <section class="metrics-section" aria-label="Current organization metrics">
+    <div class="metrics-heading"><div><span class="kicker">LIVE FROM GAUZY</span><h2>At a glance</h2></div>
+      <button type="button" (click)="refreshMetrics()" [disabled]="loadingMetrics()">
+        {{ loadingMetrics() ? 'Loading…' : 'Refresh' }}
+      </button>
+    </div>
+    <div class="metrics-grid" aria-live="polite">
+      @for (metric of metrics(); track metric.id) {
+        <div class="metric-card">
+          <span>{{ metric.label }}</span>
+          <strong>{{ loadingMetrics() ? '…' : metric.value }}</strong>
+          <small>{{ metric.description }}</small>
+        </div>
+      }
+    </div>
+  </section>
+
   <div class="section-title">
     <div><span class="kicker">01 / OPERATIONS</span><h2>Business command center</h2>
       <p>Work in the real Gauzy modules with their existing permissions and data.</p></div>

@@ -3,9 +3,12 @@
  * This derivative keeps the upstream Ever Gauzy AGPL-3.0 license intact.
  */
 import { AsyncPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { distinctUntilChanged, filter, firstValueFrom } from 'rxjs';
+import { IGetTaskOptions, IOrganization, IOrganizationContactFindInput, IOrganizationProjectsFindInput } from '@gauzy/contracts';
 import { RouterLink } from '@angular/router';
-import { Store } from '@gauzy/ui-core/core';
+import { OrganizationContactService, OrganizationProjectsService, Store, TasksService } from '@gauzy/ui-core/core';
 
 interface LaunchModule {
   readonly id: string;
@@ -34,7 +37,77 @@ interface WorkspaceLink {
 export class OmniditeOsComponent {
   private readonly store = inject(Store);
   public readonly organization$ = this.store.selectedOrganization$;
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly projectsService = inject(OrganizationProjectsService);
+  private readonly contactsService = inject(OrganizationContactService);
+  private readonly tasksService = inject(TasksService);
+  private metricsGeneration = 0;
+
+  public readonly loadingMetrics = signal(false);
+  public readonly metrics = signal<readonly { id: string; label: string; value: string; description: string }[]>([
+    { id: 'projects', label: 'Projects', value: '—', description: 'Current organization' },
+    { id: 'contacts', label: 'Contacts', value: '—', description: 'Current organization' },
+    { id: 'tasks', label: 'Tasks', value: '—', description: 'Current organization' }
+  ]);
   public searchQuery = '';
+
+  constructor() {
+    this.organization$
+      .pipe(
+        filter((organization): organization is IOrganization => !!organization),
+        distinctUntilChanged((previous, current) =>
+          previous.id === current.id && previous.tenantId === current.tenantId
+        ),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe((organization) => { void this.loadMetrics(organization); });
+  }
+
+  public refreshMetrics(): void {
+    const organization = this.store.selectedOrganization;
+    if (organization) void this.loadMetrics(organization);
+  }
+
+  /** Reuses Gauzy services so JWT, organization scoping and API handling stay centralized. */
+  private async loadMetrics(organization: IOrganization): Promise<void> {
+    const request = ++this.metricsGeneration;
+    this.loadingMetrics.set(true);
+
+    const scope = { organizationId: organization.id, tenantId: organization.tenantId };
+    const [projects, contacts, tasks] = await Promise.allSettled([
+      this.projectsService.getCount(scope as IOrganizationProjectsFindInput),
+      this.contactsService.getAll([], scope as IOrganizationContactFindInput),
+      firstValueFrom(this.tasksService.getAllTasks(scope as IGetTaskOptions))
+    ]);
+
+    // A response for an organization we left must never paint the new organization.
+    if (request !== this.metricsGeneration || this.store.selectedOrganization?.id !== organization.id) return;
+
+    const display = (outcome: PromiseSettledResult<unknown>, count: number | undefined): string =>
+      outcome.status === 'fulfilled' && typeof count === 'number' && Number.isFinite(count)
+        ? String(Math.max(0, count))
+        : '—';
+
+    this.metrics.set([
+      {
+        id: 'projects', label: 'Projects',
+        value: display(projects, projects.status === 'fulfilled' ? projects.value : undefined),
+        description: projects.status === 'fulfilled' ? 'Current organization' : 'Not available to this account'
+      },
+      {
+        id: 'contacts', label: 'Contacts',
+        value: display(contacts, contacts.status === 'fulfilled' ? contacts.value.total : undefined),
+        description: contacts.status === 'fulfilled' ? 'Current organization' : 'Not available to this account'
+      },
+      {
+        id: 'tasks', label: 'Tasks',
+        value: display(tasks, tasks.status === 'fulfilled' ? tasks.value.total : undefined),
+        description: tasks.status === 'fulfilled' ? 'Current organization' : 'Not available to this account'
+      }
+    ]);
+    this.loadingMetrics.set(false);
+  }
+
   /**
    * These are actual Gauzy module routes, not replacements for Gauzy data.
    * Existing route guards, permissions, and feature flags remain authoritative.

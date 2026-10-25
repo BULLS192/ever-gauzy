@@ -13,6 +13,7 @@ Run Omnidite's internal business operations with Ever Gauzy as the system of rec
 - Existing dashboard retained at /pages/dashboard.
 - New Omnidite OS navigation section in the main sidebar.
 - Contextual active-organization label using the existing Gauzy Store observable.
+- Live, organization-scoped counts for projects, contacts and tasks using Gauzy's existing Angular services. Failure or missing permission is shown as unavailable, not zero. Responses from a previous organization are discarded.
 - Responsive blue/navy Omnidite command center.
 - Actual links to Gauzy contacts, sales pipeline, organization projects, tasks, invoices, expenses, vendors and dashboard reports.
 - Searchable shortcuts to Omnidite, SGBuddy, Aedificatus Atlas, Providence and Space City Darts.
@@ -23,7 +24,7 @@ These links are not backend integrations: they open existing functionality. No n
 ## Not yet implemented
 
 - Complete application rebrand including login, menus, images, app icons, desktop installers. The O shown in the new page is a temporary CSS treatment, not the approved brand logo.
-- API-backed Omnidite KPI metrics, external-app data sync, unified sign-on, workflow automation, alerts.
+- Detailed financial KPIs and external-app data sync, unified sign-on, workflow automation, alerts.
 - Replacement of any existing Omnidite applications.
 - Commerce extension security fixes and production validation.
 - Deployment, migration, end-to-end tests or a green CI build.
@@ -49,6 +50,9 @@ Large Nx builds can be RAM intensive; do not run inherited upstream CI on your h
 - Frontend compiled and strict-template validation green
 - Login required to visit /pages/os
 - Active organization updates when switched
+- The Gauzy API returns actual scoped project, contact and task counts
+- Counts for denied permissions show unavailable, not a misleading zero
+- Switching organizations during a slow request does not show stale results
 - Module routes enforce existing permissions and feature flags
 - No sensitive information in front-end source
 - No default/demo passwords on any exposed installation
