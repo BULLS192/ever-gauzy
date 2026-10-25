@@ -36,6 +36,7 @@ import { ReportService } from './reports/all-report/report.service';
 	standalone: false
 })
 export class PagesComponent extends TranslationBaseComponent implements AfterViewInit, OnInit, OnDestroy {
+	private static omniditeNavigationRegistered = false;
 	private readonly _router = inject(Router);
 	private readonly _route = inject(ActivatedRoute);
 	private readonly _store = inject(Store);
@@ -75,7 +76,9 @@ export class PagesComponent extends TranslationBaseComponent implements AfterVie
 			.subscribe();
 		await this._createEntryPoint();
 		// Omnidite's private command center sits beside Gauzy's existing modules.
-		this._navMenuBuilderService.addNavMenuSection(
+		if (!PagesComponent.omniditeNavigationRegistered) {
+			PagesComponent.omniditeNavigationRegistered = true;
+			this._navMenuBuilderService.addNavMenuSection(
 			{
 				id: 'omnidite-os',
 				title: 'Omnidite OS',
@@ -91,7 +94,8 @@ export class PagesComponent extends TranslationBaseComponent implements AfterVie
 				}]
 			},
 			'dashboard'
-		);
+			);
+		}
 
 
 		this._store.selectedOrganization$

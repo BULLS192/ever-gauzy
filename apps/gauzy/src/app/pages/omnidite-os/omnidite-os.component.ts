@@ -5,7 +5,7 @@
 import { AsyncPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { distinctUntilChanged, filter, firstValueFrom } from 'rxjs';
+import { distinctUntilChanged, firstValueFrom } from 'rxjs';
 import { IGetTaskOptions, IOrganization, IOrganizationContactFindInput, IOrganizationProjectsFindInput } from '@gauzy/contracts';
 import { RouterLink } from '@angular/router';
 import { OrganizationContactService, OrganizationProjectsService, Store, TasksService } from '@gauzy/ui-core/core';
@@ -44,6 +44,8 @@ export class OmniditeOsComponent {
   private metricsGeneration = 0;
 
   public readonly loadingMetrics = signal(false);
+  public readonly projectsPreview = signal<readonly { id: string; name: string }[]>([]);
+  public readonly projectsPreviewState = signal<'unavailable' | 'empty' | 'ready'>('empty');
   public readonly metrics = signal<readonly { id: string; label: string; value: string; description: string }[]>([
     { id: 'projects', label: 'Projects', value: '—', description: 'Current organization' },
     { id: 'contacts', label: 'Contacts', value: '—', description: 'Current organization' },
@@ -54,13 +56,25 @@ export class OmniditeOsComponent {
   constructor() {
     this.organization$
       .pipe(
-        filter((organization): organization is IOrganization => !!organization),
         distinctUntilChanged((previous, current) =>
-          previous.id === current.id && previous.tenantId === current.tenantId
+          previous?.id === current?.id && previous?.tenantId === current?.tenantId
         ),
         takeUntilDestroyed(this.destroyRef)
       )
-      .subscribe((organization) => { void this.loadMetrics(organization); });
+      .subscribe((organization) => {
+        if (organization) {
+          void this.loadMetrics(organization);
+        } else {
+          // Reset immediately when an organization is deselected.
+          ++this.metricsGeneration;
+          this.projectsPreview.set([]);
+          this.projectsPreviewState.set('empty');
+          this.loadingMetrics.set(false);
+          this.metrics.update((current) => current.map((metric) => ({
+            ...metric, value: '—', description: 'Select an organization'
+          })));
+        }
+      });
   }
 
   public refreshMetrics(): void {
@@ -75,13 +89,24 @@ export class OmniditeOsComponent {
 
     const scope = { organizationId: organization.id, tenantId: organization.tenantId };
     const [projects, contacts, tasks] = await Promise.allSettled([
-      this.projectsService.getCount(scope as IOrganizationProjectsFindInput),
+      this.projectsService.getAll([], scope as IOrganizationProjectsFindInput),
       this.contactsService.getAll([], scope as IOrganizationContactFindInput),
       firstValueFrom(this.tasksService.getAllTasks(scope as IGetTaskOptions))
     ]);
 
     // A response for an organization we left must never paint the new organization.
     if (request !== this.metricsGeneration || this.store.selectedOrganization?.id !== organization.id) return;
+
+    this.projectsPreview.set(
+      projects.status === 'fulfilled'
+        ? projects.value.items.slice(0, 5).map((project) => ({ id: project.id, name: project.name }))
+        : []
+    );
+    this.projectsPreviewState.set(
+      projects.status !== 'fulfilled'
+        ? 'unavailable'
+        : projects.value.items.length === 0 ? 'empty' : 'ready'
+    );
 
     const display = (outcome: PromiseSettledResult<unknown>, count: number | undefined): string =>
       outcome.status === 'fulfilled' && typeof count === 'number' && Number.isFinite(count)
@@ -91,7 +116,7 @@ export class OmniditeOsComponent {
     this.metrics.set([
       {
         id: 'projects', label: 'Projects',
-        value: display(projects, projects.status === 'fulfilled' ? projects.value : undefined),
+        value: display(projects, projects.status === 'fulfilled' ? projects.value.total : undefined),
         description: projects.status === 'fulfilled' ? 'Current organization' : 'Not available to this account'
       },
       {

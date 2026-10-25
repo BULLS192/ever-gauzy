@@ -55,3 +55,12 @@ footer { display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; 
 .metric-card strong { font-size:29px; letter-spacing:-.035em; line-height:1.1; color:#1b3861; }
 .metric-card small { font-size:11px; color:#8998ab; }
 @media(max-width:700px) { .metrics-grid { grid-template-columns:1fr; } }
+
+.project-preview { margin-top:8px; }
+.project-list { background:#fff; border:1px solid #dce5ef; border-radius:13px; overflow:hidden; }
+.project-row { display:flex; gap:13px; align-items:center; padding:15px 20px; border-bottom:1px solid #ecf1f6; font-size:12px; font-weight:700; color:#223e62; text-decoration:none; }
+.project-row:last-child { border-bottom:0; }
+.project-row:hover,.project-row:focus-visible { background:#f4f8ff; }
+.project-row > span:nth-child(2) { flex:1; min-width:0; overflow-wrap:anywhere; }
+.project-dot { flex:none; width:8px; height:8px; border-radius:50%; background:#5986d0; }
+.text-link { color:#2d60a8; text-decoration:none; font-size:12px; font-weight:800; }

@@ -53,6 +53,31 @@
     }
   </section>
 
+  <section class="project-preview" aria-labelledby="project-preview-title">
+    <div class="section-title">
+      <div><span class="kicker">DELIVERY</span><h2 id="project-preview-title">Projects in this organization</h2>
+        <p>Live project names from Gauzy. Open the project module to manage them.</p></div>
+      <a class="text-link" routerLink="/pages/organization/projects">All projects ↗</a>
+    </div>
+    <div class="project-list">
+      @if (loadingMetrics()) {
+        <p class="empty-list">Loading projects…</p>
+      } @else if (projectsPreviewState() === 'unavailable') {
+        <p class="empty-list">Project list unavailable or your account does not have access.</p>
+      } @else if (projectsPreviewState() === 'empty') {
+        <p class="empty-list">No projects available for the selected organization.</p>
+      } @else {
+        @for (project of projectsPreview(); track project.id) {
+          <a class="project-row" routerLink="/pages/organization/projects">
+            <span class="project-dot" aria-hidden="true"></span>
+            <span>{{ project.name }}</span>
+            <span aria-hidden="true">↗</span>
+          </a>
+        }
+      }
+    </div>
+  </section>
+
   <section class="workspace-section">
     <div class="section-title">
       <div><span class="kicker">02 / ECOSYSTEM</span><h2>Your workspaces</h2>

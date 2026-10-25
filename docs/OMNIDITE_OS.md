@@ -14,6 +14,7 @@ Run Omnidite's internal business operations with Ever Gauzy as the system of rec
 - New Omnidite OS navigation section in the main sidebar.
 - Contextual active-organization label using the existing Gauzy Store observable.
 - Live, organization-scoped counts for projects, contacts and tasks using Gauzy's existing Angular services. Failure or missing permission is shown as unavailable, not zero. Responses from a previous organization are discarded.
+- Preview of up to five organization projects from the real Gauzy project API. Selecting no organization clears the displayed data.
 - Responsive blue/navy Omnidite command center.
 - Actual links to Gauzy contacts, sales pipeline, organization projects, tasks, invoices, expenses, vendors and dashboard reports.
 - Searchable shortcuts to Omnidite, SGBuddy, Aedificatus Atlas, Providence and Space City Darts.
