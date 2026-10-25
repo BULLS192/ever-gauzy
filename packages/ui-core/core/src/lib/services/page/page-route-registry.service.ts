@@ -35,6 +35,7 @@ export const PAGE_SECTIONS_LOCATION: PageRouteLocationId = 'page-sections';
  * Plugin paths (NOT reserved, e.g. jobs) are registered via PAGE_SECTIONS_LOCATION.
  */
 export const RESERVED_PAGE_SECTION_PATHS = new Set<string>([
+	'os',
 	'dashboard',
 	'accounting',
 	'contacts',
