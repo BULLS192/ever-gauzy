@@ -27,6 +27,7 @@ import { featureDocumentsRedirectGuard } from './feature-documents-redirect.guar
 export const getPagesRoutes = (_pageRouteRegistryService: PageRouteRegistryService): Routes => {
 	const children: Route[] = [
 		...getRedirectRoute(),
+		...getOmniditeRoute(),
 		...getDashboardRoute(),
 		...getAccountingRoutes(_pageRouteRegistryService),
 		...getContactsRoute(),
@@ -60,9 +61,17 @@ export const getPagesRoutes = (_pageRouteRegistryService: PageRouteRegistryServi
 	];
 };
 
-/** Redirects empty /pages to /pages/dashboard */
+/** Redirects empty /pages to Omnidite OS */
 function getRedirectRoute(): Route[] {
-	return [{ path: '', redirectTo: 'dashboard', pathMatch: 'full' }];
+	return [{ path: '', redirectTo: 'os', pathMatch: 'full' }];
+}
+
+function getOmniditeRoute(): Route[] {
+  return [{
+    path: 'os',
+    loadComponent: () => import('./omnidite-os/omnidite-os.component').then((m) => m.OmniditeOsComponent),
+    data: { selectors: { project: false, team: false, employee: false, date: false } }
+  }];
 }
 
 function getDashboardRoute(): Route[] {

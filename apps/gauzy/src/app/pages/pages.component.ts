@@ -74,6 +74,25 @@ export class PagesComponent extends TranslationBaseComponent implements AfterVie
 			)
 			.subscribe();
 		await this._createEntryPoint();
+		// Omnidite's private command center sits beside Gauzy's existing modules.
+		this._navMenuBuilderService.addNavMenuSection(
+			{
+				id: 'omnidite-os',
+				title: 'Omnidite OS',
+				icon: 'grid-outline',
+				menuCategory: 'main',
+				data: { translationKey: 'Omnidite OS', noTranslate: true },
+				items: [{
+					id: 'omnidite-command-center',
+					title: 'Command Center',
+					icon: 'home-outline',
+					link: '/pages/os',
+					data: { translationKey: 'Command Center', noTranslate: true }
+				}]
+			},
+			'dashboard'
+		);
+
 
 		this._store.selectedOrganization$
 			.pipe(
